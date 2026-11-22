@@ -142,6 +142,9 @@ class Orchestrator:
             stopped = f"budget exceeded: {e}"
         except AgentError as e:
             stopped = f"agent error: {e}"
+        except Exception as e:  # API/git/unexpected errors: still write report, cost and patch
+            stopped = f"crashed: {type(e).__name__}: {e}"
+            self.logger.event("orchestrator", "crash", {"error": repr(e)})
 
         git_tools.checkout(self.workspace, self.base_branch)
         self._say("Running integration tests...")
