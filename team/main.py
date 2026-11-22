@@ -39,12 +39,17 @@ def main(argv: list[str] | None = None) -> int:
 
     # Imported late so --help works without the API key / SDK.
     from team.orchestrator.orchestrator import Orchestrator
+    from team.tools.git_tools import GitError
 
-    orchestrator = Orchestrator(
-        config,
-        workspace=Path(args.repo) if args.repo else None,
-        run_id=args.run_id,
-    )
+    try:
+        orchestrator = Orchestrator(
+            config,
+            workspace=Path(args.repo) if args.repo else None,
+            run_id=args.run_id,
+        )
+    except GitError as e:
+        print(f"Cannot use workspace: {e}", file=sys.stderr)
+        return 2
     summary = orchestrator.run(args.request)
 
     print("\n" + "=" * 60)
