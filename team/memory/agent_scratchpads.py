@@ -10,11 +10,5 @@ class Scratchpads:
     def add(self, role: str, note: str, task_id: str | None = None) -> None:
         self._notes[(role, task_id)].append(note)
 
-    def get(self, role: str, task_id: str | None = None) -> list[str]:
-        return list(self._notes[(role, task_id)])
-
     def render(self, role: str, task_id: str | None = None, limit: int = 5) -> str:
         return "\n".join(f"- {n}" for n in self._notes[(role, task_id)][-limit:])
-
-    def clear(self, role: str, task_id: str | None = None) -> None:
-        self._notes.pop((role, task_id), None)

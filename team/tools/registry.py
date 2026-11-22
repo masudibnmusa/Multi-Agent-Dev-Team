@@ -90,7 +90,6 @@ SCHEMAS: dict[str, dict] = {s["name"]: s for s in [
     }, ("summary", "tasks")),
     _tool("submit_implementation", "Submit your finished implementation for review.", {
         "summary": _str("What you changed and why"),
-        "files_changed": _strs("Files created or modified"),
     }, ("summary",)),
     _tool("submit_review", "Submit your review verdict.", {
         "verdict": {"type": "string", "enum": ["approve", "request_changes"]},
