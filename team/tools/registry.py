@@ -150,6 +150,13 @@ class ToolRegistry:
             return f"ERROR: tool '{name}' is not permitted for profile '{profile}'"
         ws = self.ctx.workspace
 
+        # The Tester owns tests/; a coder editing them could make failing tests "pass".
+        if profile == "coder" and name in ("write_file", "edit_file"):
+            tests_dir = ws.resolve() / "tests"
+            target = ft._resolve(ws, args["path"])
+            if target == tests_dir or tests_dir in target.parents:
+                return "ERROR: tests/ belongs to the Tester; the coder may not write there"
+
         if name == "list_files":
             out = ft.list_files(ws, args.get("path", "."))
         elif name == "read_file":
