@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-labelledby="t d">
+  <title id="t">Multi-Agent Dev Team</title>
+  <desc id="d">Planner, Coder, Reviewer and Tester agents turn a feature request into reviewed, tested code, with a feedback loop back to the Coder.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B1020"/>
+      <stop offset="1" stop-color="#151B35"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.78" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#6366F1" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#6366F1" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="title" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#C7D2FE"/>
+    </linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#FFFFFF" stroke-opacity="0.04"/>
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0L10 5L0 10z" fill="#94A3B8"/>
+    </marker>
+    <marker id="arrowLoop" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0L10 5L0 10z" fill="#F59E0B"/>
+    </marker>
+  </defs>
+
+  <rect width="1280" height="400" fill="url(#bg)"/>
+  <rect width="1280" height="400" fill="url(#grid)"/>
+  <rect width="1280" height="400" fill="url(#glow)"/>
+
+  <g font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+    <!-- Left: title -->
+    <text x="96" y="150" font-size="15" font-weight="600" letter-spacing="3" fill="#818CF8">LLM AGENT TEAM</text>
+    <text x="96" y="212" font-size="56" font-weight="800" fill="url(#title)">Multi-Agent</text>
+    <text x="96" y="272" font-size="56" font-weight="800" fill="url(#title)">Dev Team</text>
+    <text x="96" y="314" font-size="19" fill="#94A3B8">Feature request in. Reviewed, tested code out.</text>
+
+    <!-- Right: pipeline -->
+    <g font-size="15" font-weight="600" text-anchor="middle">
+      <!-- edges -->
+      <path d="M754 200H784" stroke="#94A3B8" stroke-width="2" marker-end="url(#arrow)"/>
+      <path d="M904 200H934" stroke="#94A3B8" stroke-width="2" marker-end="url(#arrow)"/>
+      <path d="M1054 200H1084" stroke="#94A3B8" stroke-width="2" marker-end="url(#arrow)"/>
+      <!-- feedback loop: Reviewer + Tester back to Coder -->
+      <path d="M1144 236V286Q1144 300 1130 300H860Q846 300 846 286V244" fill="none" stroke="#F59E0B" stroke-width="2" stroke-dasharray="6 6" marker-end="url(#arrowLoop)"/>
+      <path d="M994 236V300" fill="none" stroke="#F59E0B" stroke-width="2" stroke-dasharray="6 6"/>
+      <text x="995" y="326" font-size="13" font-weight="500" fill="#FBBF24">review comments + test failures</text>
+
+      <!-- nodes -->
+      <g>
+        <rect x="634" y="164" width="120" height="72" rx="14" fill="#1E2547" stroke="#818CF8" stroke-width="1.5"/>
+        <circle cx="660" cy="200" r="6" fill="#818CF8"/>
+        <text x="702" y="205" fill="#E0E7FF">Planner</text>
+      </g>
+      <g>
+        <rect x="784" y="164" width="120" height="72" rx="14" fill="#1E2547" stroke="#22D3EE" stroke-width="1.5"/>
+        <circle cx="810" cy="200" r="6" fill="#22D3EE"/>
+        <text x="852" y="205" fill="#E0E7FF">Coder</text>
+      </g>
+      <g>
+        <rect x="934" y="164" width="120" height="72" rx="14" fill="#1E2547" stroke="#A78BFA" stroke-width="1.5"/>
+        <circle cx="956" cy="200" r="6" fill="#A78BFA"/>
+        <text x="1000" y="205" fill="#E0E7FF">Reviewer</text>
+      </g>
+      <g>
+        <rect x="1084" y="164" width="120" height="72" rx="14" fill="#1E2547" stroke="#34D399" stroke-width="1.5"/>
+        <circle cx="1110" cy="200" r="6" fill="#34D399"/>
+        <text x="1152" y="205" fill="#E0E7FF">Tester</text>
+      </g>
+
+      <text x="919" y="132" font-size="13" font-weight="500" fill="#64748B" letter-spacing="1">typed messages · shared memory · capped rounds</text>
+    </g>
+  </g>
+</svg>

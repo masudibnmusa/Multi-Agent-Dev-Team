@@ -1,4 +1,18 @@
+<p align="center">
+  <img src="assets/banner.svg" alt="Multi-Agent Dev Team: Planner, Coder, Reviewer and Tester agents with a feedback loop" width="100%">
+</p>
+
 # Multi-Agent Dev Team
+
+<p align="center">
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white" alt="Python 3.11+"></a>
+  <a href="https://docs.anthropic.com/"><img src="https://img.shields.io/badge/Claude%20API-tool%20use-D97757?logo=anthropic&logoColor=white" alt="Claude API"></a>
+  <a href="https://docs.pydantic.dev/"><img src="https://img.shields.io/badge/Pydantic-v2-E92063?logo=pydantic&logoColor=white" alt="Pydantic v2"></a>
+  <a href="https://docs.pytest.org/"><img src="https://img.shields.io/badge/tested%20with-pytest-0A9EDC?logo=pytest&logoColor=white" alt="Tested with pytest"></a>
+  <a href="https://docs.astral.sh/ruff/"><img src="https://img.shields.io/badge/lint-ruff-D7FF64?logo=ruff&logoColor=black" alt="Ruff"></a>
+  <a href="https://www.docker.com/"><img src="https://img.shields.io/badge/sandbox-Docker%20(optional)-2496ED?logo=docker&logoColor=white" alt="Docker optional"></a>
+  <a href="#license"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
+</p>
 
 A team of specialized LLM agents that turns a plain-language feature request into working, reviewed, and tested code.
 
@@ -34,6 +48,13 @@ A **Planner** breaks the request into tasks, a **Coder** implements them, a **Re
 
 ## Architecture
 
+<p align="center">
+  <img src="assets/architecture.svg" alt="Architecture: feature request to Planner, shared store and task scheduler; per-task loop of Coder, Reviewer and Tester with feedback to the Coder; integration test run producing final.patch and report.md" width="100%">
+</p>
+
+<details>
+<summary>Text version</summary>
+
 ```
 Feature request
       ↓
@@ -57,6 +78,8 @@ task_scheduler.py picks next task
       ↓
 integration test run → final.patch + report.md
 ```
+
+</details>
 
 ### Agents
 

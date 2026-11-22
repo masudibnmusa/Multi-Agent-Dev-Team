@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="800" viewBox="0 0 1100 800" role="img" aria-labelledby="t d">
+  <title id="t">Multi-Agent Dev Team architecture</title>
+  <desc id="d">A feature request goes to the Planner, which writes a structured plan to the shared store. The task scheduler picks the next task. In the per-task loop the Coder implements it, the Reviewer approves or requests changes, and the Tester writes and runs tests; review changes and test failures route back to the Coder. Passing tasks are marked done. After all tasks, an integration test run produces final.patch and report.md.</desc>
+  <style>
+    /* Primitive tokens (shared with banner.svg) */
+    svg {
+      --navy-950: #0B1020; --navy-900: #151B35; --navy-800: #1E2547;
+      --indigo-200: #C7D2FE; --indigo-100: #E0E7FF; --indigo-400: #818CF8;
+      --cyan-400: #22D3EE; --violet-400: #A78BFA; --emerald-400: #34D399;
+      --amber-500: #F59E0B; --amber-400: #FBBF24;
+      --slate-400: #94A3B8; --slate-500: #64748B; --slate-600: #475569;
+      --font-sans: ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+      /* Semantic tokens */
+      --bg: var(--navy-950); --bg-alt: var(--navy-900); --surface: var(--navy-800);
+      --text: var(--indigo-100); --text-muted: var(--slate-400); --text-subtle: var(--slate-500);
+      --edge: var(--slate-400); --border-group: var(--slate-600);
+      --feedback: var(--amber-500); --feedback-text: var(--amber-400);
+      --role-planner: var(--indigo-400); --role-coder: var(--cyan-400);
+      --role-reviewer: var(--violet-400); --role-tester: var(--emerald-400);
+      --role-infra: var(--slate-400); --artifact: var(--indigo-200);
+    }
+    /* Component tokens */
+    .node   { fill: var(--surface); stroke-width: 1.5; }
+    .title  { font: 600 16px var(--font-sans); fill: var(--text); text-anchor: middle; }
+    .file   { font: 12px var(--font-mono); fill: var(--text-muted); text-anchor: middle; }
+    .msg    { font: 12px var(--font-mono); fill: var(--text-muted); text-anchor: middle; }
+    .fb     { font: 500 12px var(--font-sans); fill: var(--feedback-text); text-anchor: middle; }
+    .group  { font: 600 12px var(--font-sans); fill: var(--text-subtle); letter-spacing: 2px; }
+    .edge   { fill: none; stroke: var(--edge); stroke-width: 2; }
+    .loop   { fill: none; stroke: var(--feedback); stroke-width: 2; stroke-dasharray: 6 6; }
+    .planner  { stroke: var(--role-planner); }
+    .coder    { stroke: var(--role-coder); }
+    .reviewer { stroke: var(--role-reviewer); }
+    .tester   { stroke: var(--role-tester); }
+    .infra    { stroke: var(--role-infra); }
+    .artifact { stroke: var(--artifact); }
+  </style>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B1020"/>
+      <stop offset="1" stop-color="#151B35"/>
+    </linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#FFFFFF" stroke-opacity="0.04"/>
+    </pattern>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0L10 5L0 10z" fill="#94A3B8"/>
+    </marker>
+    <marker id="af" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0L10 5L0 10z" fill="#F59E0B"/>
+    </marker>
+  </defs>
+
+  <rect width="1100" height="800" rx="16" fill="url(#bg)"/>
+  <rect width="1100" height="800" rx="16" fill="url(#grid)"/>
+
+  <!-- Feature request -->
+  <rect class="node artifact" x="460" y="30" width="180" height="44" rx="22"/>
+  <text class="title" x="550" y="57">Feature request</text>
+  <path class="edge" d="M550 74V106" marker-end="url(#a)"/>
+
+  <!-- Planner -> shared store -->
+  <rect class="node planner" x="460" y="110" width="180" height="68" rx="14"/>
+  <text class="title" x="550" y="140">Planner</text>
+  <text class="file" x="550" y="161">planner_agent.py</text>
+  <path class="edge" d="M640 144H756" marker-end="url(#a)"/>
+  <text class="msg" x="698" y="136">structured plan</text>
+  <rect class="node infra" x="760" y="110" width="180" height="68" rx="14"/>
+  <text class="title" x="850" y="140">Shared store</text>
+  <text class="file" x="850" y="161">shared_store.py</text>
+  <path class="edge" d="M550 178V210" marker-end="url(#a)"/>
+
+  <!-- Scheduler -->
+  <rect class="node infra" x="460" y="214" width="180" height="68" rx="14"/>
+  <text class="title" x="550" y="244">Task scheduler</text>
+  <text class="file" x="550" y="265">picks next task</text>
+
+  <!-- Per-task loop -->
+  <rect x="60" y="330" width="980" height="300" rx="20" fill="#FFFFFF" fill-opacity="0.02" stroke="#475569" stroke-dasharray="4 6"/>
+  <text class="group" x="84" y="358">PER-TASK LOOP · ORCHESTRATOR</text>
+
+  <path class="edge" d="M550 282V304H185V436" marker-end="url(#a)"/>
+  <text class="msg" x="260" y="398">TaskAssignment</text>
+
+  <rect class="node coder" x="100" y="440" width="170" height="68" rx="14"/>
+  <text class="title" x="185" y="470">Coder</text>
+  <text class="file" x="185" y="491">edits files</text>
+
+  <path class="edge" d="M270 474H376" marker-end="url(#a)"/>
+  <text class="msg" x="325" y="464">ReviewRequest</text>
+
+  <rect class="node reviewer" x="380" y="440" width="170" height="68" rx="14"/>
+  <text class="title" x="465" y="470">Reviewer</text>
+  <text class="file" x="465" y="491">reviewer_agent.py</text>
+
+  <path class="edge" d="M550 474H656" marker-end="url(#a)"/>
+  <text class="msg" x="605" y="464">approved</text>
+
+  <rect class="node tester" x="660" y="440" width="170" height="68" rx="14"/>
+  <text class="title" x="745" y="470">Tester</text>
+  <text class="file" x="745" y="491">writes + runs tests</text>
+
+  <path class="edge" d="M830 474H896" marker-end="url(#a)"/>
+  <text class="msg" x="864" y="464">passing</text>
+
+  <rect class="node infra" x="900" y="440" width="120" height="68" rx="14"/>
+  <text class="title" x="960" y="470">Task done</text>
+  <text class="file" x="960" y="491">shared store</text>
+
+  <!-- Feedback loops -->
+  <path class="loop" d="M465 508V556H205V512" marker-end="url(#af)"/>
+  <text class="fb" x="335" y="548">changes requested · round +1</text>
+  <path class="loop" d="M745 508V600H165V512" marker-end="url(#af)"/>
+  <text class="fb" x="455" y="592">failures · TestReport</text>
+
+  <!-- Integration -->
+  <path class="edge" d="M550 630V672" marker-end="url(#a)"/>
+  <text class="msg" x="560" y="656" style="text-anchor:start">all tasks done</text>
+  <rect class="node infra" x="430" y="676" width="240" height="68" rx="14"/>
+  <text class="title" x="550" y="706">Integration test run</text>
+  <text class="file" x="550" y="727">full tests/ suite</text>
+
+  <path class="edge" d="M670 710H746" marker-end="url(#a)"/>
+  <rect class="node artifact" x="750" y="693" width="140" height="34" rx="17"/>
+  <text class="file" x="820" y="715" style="fill:var(--text)">final.patch</text>
+  <rect class="node artifact" x="900" y="693" width="140" height="34" rx="17"/>
+  <text class="file" x="970" y="715" style="fill:var(--text)">report.md</text>
+</svg>
