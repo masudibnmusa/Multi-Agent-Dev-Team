@@ -41,7 +41,8 @@ def main() -> None:
     if args.run_dir:
         run_dir = Path(args.run_dir)
     else:
-        runs = sorted(p for p in (ROOT / "data" / "runs").iterdir() if p.is_dir())
+        runs_dir = ROOT / "data" / "runs"
+        runs = sorted(p for p in runs_dir.iterdir() if p.is_dir()) if runs_dir.is_dir() else []
         if not runs:
             raise SystemExit("No runs found.")
         run_dir = runs[-1]
