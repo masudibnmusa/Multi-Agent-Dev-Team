@@ -37,17 +37,22 @@ def commit_all(root: Path, message: str, allow_empty: bool = False) -> bool:
 def init_repo(root: Path) -> str:
     """Ensure root is a git repo with at least one commit. Returns the base branch name."""
     root.mkdir(parents=True, exist_ok=True)
-    if not (root / ".git").exists():
+    if (root / ".git").exists():
+        # A real user repo: every run commits with `add -A`, so never sweep up the user's own changes.
+        if _git(root, "status", "--porcelain").strip():
+            raise GitError(f"{root} has uncommitted changes; commit or stash them first")
+    else:
         _git(root, "init", "-b", "main")
-    gitignore = root / ".gitignore"
-    if not gitignore.exists():
-        gitignore.write_text("__pycache__/\n.pytest_cache/\n.ruff_cache/\n.venv/\n")
+        (root / ".gitignore").write_text("__pycache__/\n.pytest_cache/\n.ruff_cache/\n.venv/\n")
     has_commits = subprocess.run(
         ["git", "rev-parse", "--verify", "HEAD"], cwd=root, capture_output=True
     ).returncode == 0
     if not has_commits:
         commit_all(root, "Initial commit", allow_empty=True)
-    return current_branch(root)
+    branch = current_branch(root)
+    if branch == "HEAD":
+        raise GitError(f"{root} is on a detached HEAD; check out a branch first")
+    return branch
 
 
 def create_branch(root: Path, name: str, base: str) -> None:

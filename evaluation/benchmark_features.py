@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-import os
 import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+
+from team.sandbox.docker_manager import local_env
 
 
 @dataclass
@@ -164,11 +165,7 @@ def run_hidden_tests(feature: Feature, workspace: Path, timeout: int = 120) -> b
     hidden_dir = workspace / "_hidden_tests"
     hidden_dir.mkdir(exist_ok=True)
     (hidden_dir / "test_hidden.py").write_text(feature.hidden_tests)
-    env = {
-        **os.environ,
-        "PYTHONPATH": os.pathsep.join([str(workspace), str(workspace / "src")]),
-        "PYTHONDONTWRITEBYTECODE": "1",
-    }
+    env = local_env(workspace)
     try:
         proc = subprocess.run(
             [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "_hidden_tests"],

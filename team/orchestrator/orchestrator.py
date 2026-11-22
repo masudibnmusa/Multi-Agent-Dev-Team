@@ -142,6 +142,9 @@ class Orchestrator:
             stopped = f"budget exceeded: {e}"
         except AgentError as e:
             stopped = f"agent error: {e}"
+        except Exception as e:  # API/git/unexpected errors: still write report, cost and patch
+            stopped = f"crashed: {type(e).__name__}: {e}"
+            self.logger.event("orchestrator", "crash", {"error": repr(e)})
 
         git_tools.checkout(self.workspace, self.base_branch)
         self._say("Running integration tests...")
@@ -168,7 +171,7 @@ class Orchestrator:
 
     def _run_task(self, task: TaskSpec) -> None:
         ws, base = self.workspace, self.base_branch
-        branch = f"task/{task.id.lower()}"
+        branch = f"task/{self.run_id}/{task.id.lower()}"  # run id: never reset a branch from another run
         git_tools.create_branch(ws, branch, base)
         wf = TaskWorkflow(task.id)
         self.store.set_status(task.id, "in_progress")
