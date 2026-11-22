@@ -92,7 +92,8 @@ def edit_file(root: Path, path: str, old_str: str, new_str: str) -> str:
 
 
 def write_test_file(root: Path, path: str, content: str) -> str:
-    rel = Path(path)
-    if rel.parts[:1] != ("tests",) or not rel.name.startswith("test_") or rel.suffix != ".py":
+    target = _resolve(root, path)  # check the resolved path: "tests/../src/test_x.py" must not pass
+    tests_dir = root.resolve() / "tests"
+    if tests_dir not in target.parents or not target.name.startswith("test_") or target.suffix != ".py":
         return "ERROR: test files must be written to tests/test_*.py"
     return write_file(root, path, content)
