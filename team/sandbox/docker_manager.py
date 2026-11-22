@@ -54,17 +54,20 @@ class DockerManager:
                    "-e", "PYTHONPATH=/work:/work/src", "-e", "PYTHONDONTWRITEBYTECODE=1"]
             if hasattr(os, "getuid"):
                 cmd += ["--user", f"{os.getuid()}:{os.getgid()}"]
-            cmd += [self.image, *command]
+            # Killing the docker client on timeout does not stop the container, so it times itself out.
+            cmd += [self.image, "timeout", "--kill-after=5", str(self.timeout), *command]
             env = None
         else:
             cmd = command
             env = local_env(workspace)
+        host_timeout = self.timeout + 30 if self.use_docker else self.timeout  # let the inner timeout fire first
         try:
             proc = subprocess.run(
-                cmd, cwd=workspace, env=env, capture_output=True, text=True, timeout=self.timeout
+                cmd, cwd=workspace, env=env, capture_output=True, text=True, timeout=host_timeout
             )
-            return ExecResult(proc.returncode, proc.stdout, proc.stderr)
+            timed_out = self.use_docker and proc.returncode in (124, 137)  # coreutils timeout: TERM / KILL
+            return ExecResult(proc.returncode, proc.stdout, proc.stderr, timed_out=timed_out)
         except subprocess.TimeoutExpired:
-            return ExecResult(124, "", f"Timed out after {self.timeout}s", timed_out=True)
+            return ExecResult(124, "", f"Timed out after {host_timeout}s", timed_out=True)
         except FileNotFoundError as e:
             return ExecResult(127, "", f"Command not found: {e}")

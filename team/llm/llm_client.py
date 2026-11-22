@@ -50,11 +50,17 @@ class LLMClient:
                 system=system,
                 tools=tools,
                 messages=messages,
+                # Each turn resends the whole conversation; caching makes the repeated prefix ~10x cheaper.
+                cache_control={"type": "ephemeral"},
             )
-            self.cost.record(agent, model, response.usage.input_tokens, response.usage.output_tokens)
+            u = response.usage
+            cache_write = u.cache_creation_input_tokens or 0
+            cache_read = u.cache_read_input_tokens or 0
+            self.cost.record(agent, model, u.input_tokens, u.output_tokens, cache_write, cache_read)
             if self.logger:
                 self.logger.event(agent, "llm_call", {
-                    "turn": turn, "in": response.usage.input_tokens, "out": response.usage.output_tokens,
+                    "turn": turn, "in": u.input_tokens, "out": u.output_tokens,
+                    "cache_write": cache_write, "cache_read": cache_read,
                 })
 
             messages.append({"role": "assistant", "content": response.content})

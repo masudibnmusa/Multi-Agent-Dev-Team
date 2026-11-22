@@ -39,7 +39,7 @@ def test_invalid_payload_rejected():
 
 def test_wrong_payload_type_rejected_at_creation():
     result = ReviewResult(task_id="T1", verdict="approve")
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="needs a TaskAssignment, got ReviewResult"):
         Message.create(MessageType.TASK_ASSIGNMENT, "a", "b", result)
 
 

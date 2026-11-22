@@ -74,6 +74,3 @@ class TaskScheduler:
                 if current in t.depends_on and self.status[t.id] == "pending":
                     self.status[t.id] = "blocked"
                     queue.append(t.id)
-
-    def all_done(self) -> bool:
-        return all(s == "done" for s in self.status.values())

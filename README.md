@@ -27,7 +27,7 @@ A **Planner** breaks the request into tasks, a **Coder** implements them, a **Re
 6. **Testing**: the Tester writes tests from the acceptance criteria and runs them in a sandbox.
 7. **Feedback loop**: review comments and test failures route back to the Coder, with a capped number of revision rounds.
 8. **Conflict resolution**: if agents disagree repeatedly, the Planner or orchestrator arbitrates, or escalates to the human.
-9. **Integration**: once all tasks are approved and passing, the full test suite runs and the final patch or PR is produced.
+9. **Integration**: each finished task is merged into the base branch; at the end the full test suite runs and a `final.patch` is written.
 10. **Reporting**: a summary of what was built, decisions made, and open issues.
 
 ---
@@ -55,7 +55,7 @@ task_scheduler.py picks next task
 │  mark task done in shared_store.py                             │
 └────────────────────────────────────────────────────────────────┘
       ↓
-integration test run → final patch/PR + summary
+integration test run → final.patch + report.md
 ```
 
 ### Agents
@@ -63,9 +63,11 @@ integration test run → final patch/PR + summary
 | Agent | Responsibility | Tool access |
 |-------|----------------|-------------|
 | **Planner** | Decomposes the request into tasks, interfaces, and acceptance criteria; arbitrates deadlocks | Read-only |
-| **Coder** | Implements one task at a time and revises based on feedback | Read / search / **write** |
-| **Reviewer** | Checks diffs against the plan; returns approve or located change requests | Read-only + static analysis |
-| **Tester** | Writes tests from acceptance criteria and runs them in a sandbox | Read-only + test runner |
+| **Coder** | Implements one task at a time and revises based on feedback | Read / search / **write** (anything except `tests/`) |
+| **Reviewer** | Checks diffs against the plan; returns approve or located change requests | Read-only + static analysis + diff |
+| **Tester** | Writes tests from acceptance criteria and runs them in a sandbox | Writes only `tests/test_*.py`; blind (no read access) while writing, read + test runner while running |
+
+The Tester's pass/fail is not taken from the model: after every testing round the orchestrator runs the whole `tests/` directory itself and uses that result.
 
 ### Message Types
 
@@ -130,16 +132,12 @@ multi-agent-dev-team/
 │   ├── ablation_runner.py             # Team vs. single agent, with/without reviewer
 │   └── metrics.py                     # Success rate, rounds to completion, cost
 │
-├── workspace/                         # Generated project output
-├── data/
+├── workspace/                         # Generated project output (git-ignored)
+├── data/                              # (git-ignored)
 │   ├── runs/                          # Saved run transcripts and shared-memory snapshots
 │   └── benchmarks/
 │
-├── tests/
-│   ├── test_message_bus.py
-│   ├── test_workflow.py
-│   ├── test_shared_store.py
-│   └── test_arbitration.py
+├── tests/                             # Unit tests (no API calls, no Docker needed)
 │
 ├── .env.example
 ├── requirements.txt
@@ -153,14 +151,14 @@ multi-agent-dev-team/
 ### Prerequisites
 
 - Python 3.11+
-- Docker (for sandboxed test execution)
 - An Anthropic API key
+- Docker (optional, recommended): needed for isolated test execution (`--docker` / `USE_DOCKER=true`)
 
 ### Installation
 
 ```bash
 git clone https://github.com/masudibnmusa/Multi-Agent-Dev-Team.git
-cd multi-agent-dev-team
+cd Multi-Agent-Dev-Team
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -180,19 +178,46 @@ python -m team.main build "Add rate limiting to the login route" --repo ./path/t
 ./run.sh "Add a CSV export button to the reports page"
 ```
 
+Options for `build`:
+
+| Flag | Effect |
+|------|--------|
+| `--repo PATH` | Work in an existing git repo instead of a fresh `workspace/<run_id>/` |
+| `--docker` | Run tests in Docker (same as `USE_DOCKER=true`) |
+| `--max-rounds N` | Revision rounds per task before arbitration (N ≥ 1, default 3) |
+| `--budget USD` | Cost budget for the run (> 0, default 5.0) |
+| `--no-reviewer` | Skip the Reviewer (ablation) |
+| `--run-id ID` | Custom run id (default: timestamp) |
+
+The exit code is 0 when every task is done and the integration tests pass, 1 when the run is incomplete, and 2 for bad input.
+
+### Working in an existing repo (`--repo`)
+
+The team commits and merges in your repo, so it is strict about where it starts:
+
+- The working tree must be **clean** (no uncommitted or untracked changes), and you must be **on a branch** (not a detached HEAD). Otherwise the run refuses to start.
+- Each task runs on its own branch, `task/<run_id>/<task id>`, and is merged into the branch you started on once it passes. Unfinished work stays on its task branch as a `WIP` commit and is not merged.
+- Use `--docker` here: the repo's own code and any text in it reach the models, and generated tests run against it.
+
 ---
 
 ## Configuration
 
-Set in `team/config.py` (and `.env` for secrets):
+Defaults live in the `Config` dataclass in `team/config.py`. Secrets and a few overrides come from `.env`:
 
-| Setting | Description |
-|---------|-------------|
-| `MODELS` | Model used per role (e.g., a stronger model for Planner/Reviewer, a faster one for Coder) |
-| `MAX_REVISION_ROUNDS` | Cap on review/test feedback loops per task before arbitration |
-| `MAX_TASKS` | Upper bound on tasks the Planner may create |
-| `TOKEN_BUDGET` / `COST_BUDGET` | Hard limits per run |
-| `SANDBOX_TIMEOUT` | Max seconds for any test or code execution |
+| Setting | Where | Default | Description |
+|---------|-------|---------|-------------|
+| `ANTHROPIC_API_KEY` | `.env` | - | Required |
+| `TEAM_MODEL_PLANNER` / `_CODER` / `_REVIEWER` / `_TESTER` | `.env` | `claude-sonnet-5-5` | Model per role |
+| `USE_DOCKER` | `.env` | `false` | Run tests in Docker (no network, 1 CPU, 1 GB) |
+| `max_revision_rounds` | `config.py` / `--max-rounds` | 3 | Coder rounds per task before arbitration |
+| `max_tasks` | `config.py` | 8 | Upper bound on tasks the Planner may create |
+| `max_agent_turns` | `config.py` | 30 | LLM turns per agent call |
+| `cost_budget_usd` / `token_budget` | `config.py` / `--budget` | 5.0 / 2,000,000 | Hard limits per run |
+| `sandbox_timeout` | `config.py` | 120 | Seconds per test run (Docker containers time themselves out) |
+| `blind_tests` | `config.py` | `true` | Tester writes tests without seeing the code |
+
+**Cost tracking:** prices per model are in `PRICES_PER_MTOK` in `team/observability/cost_tracker.py`. Only `claude-sonnet-5-5` has real prices; if you switch a role to another model, add its row, or the budget is computed from the `default` guess. Every agent call uses prompt caching, and cache writes and reads are priced separately.
 
 ---
 
@@ -200,10 +225,21 @@ Set in `team/config.py` (and `.env` for secrets):
 
 Every run is saved to `data/runs/<run_id>/`:
 
-- **Transcript**: every typed message, in order
-- **Shared-memory snapshots**: plan, decisions, and task status over time
-- **Cost report**: tokens and dollars per agent
-- **Timeline**: who did what and when (`timeline_viewer.py`)
+| File | Contents |
+|------|----------|
+| `report.md` | Result, plan, task status, decisions, open issues, cost table |
+| `final.patch` | Everything the run changed, as one diff |
+| `messages.jsonl` | Every typed message, in order |
+| `events.jsonl` | LLM calls (incl. cache tokens), tool calls, arbitration, escalations, crashes |
+| `snapshots/` | Shared memory after planning and after each task |
+| `cost.json` | Tokens and dollars per agent |
+
+These are written even when a run stops early (budget, agent error, or crash); the reason is in `report.md`.
+
+```bash
+python -m team.observability.timeline_viewer                  # latest run
+python -m team.observability.timeline_viewer data/runs/<run_id> --messages-only
+```
 
 ---
 
@@ -211,28 +247,31 @@ Every run is saved to `data/runs/<run_id>/`:
 
 The `evaluation/` module measures whether the team structure actually helps.
 
-- **Benchmark features**: a set of feature requests, each with hidden acceptance tests
-- **Ablations**: full team vs. single agent, with vs. without the Reviewer, with vs. without the feedback loop
+- **Benchmark features** (`benchmark_features.py`): `slugify`, `lru_cache` and `token_bucket`, each with hidden acceptance tests the agents never see
+- **Modes**: `team_full`, `team_no_reviewer`, `single_agent` (one agent with every tool and a test loop)
 - **Metrics**:
   - Success rate (hidden tests pass)
-  - Rounds to completion
-  - Cost per successful feature
-  - Reviewer usefulness (how often review comments led to a real fix vs. noise)
+  - Average cost, and cost per successful feature
+  - Average rounds
+  - Review rejections
+  - Reviewer misses (tests failed after the Reviewer approved)
 
 ```bash
-python -m evaluation.ablation_runner --benchmark data/benchmarks/ --runs 5
+python -m evaluation.ablation_runner --modes team_full single_agent --features slugify lru_cache --repeats 3 --budget 2.0
 ```
+
+Results go to `data/benchmarks/results/<timestamp>/results.jsonl`, and a summary table is printed. Hidden tests run on the host, with the API key removed from their environment.
 
 ---
 
 ## Design Principles
 
 - **Typed over free-form**: structured messages keep runs predictable and debuggable.
-- **Least privilege**: only the Coder can write files; every other role is read-only.
+- **Least privilege**: only the Coder writes source files and it cannot touch `tests/`; the Tester writes only `tests/test_*.py`; Planner and Reviewer are read-only. All paths are confined to the workspace.
 - **Bounded loops**: revision rounds, tasks, and spend are all capped; deadlocks escalate to arbitration, then to a human.
 - **Blind testing**: the Tester works from acceptance criteria, not the implementation.
 - **Isolation**: with `USE_DOCKER=true` (or `--docker`), generated code and tests run in a Docker sandbox with no network. The default (`false`) runs them on your machine with the API key removed from their environment, but they are not isolated: use Docker for untrusted repos.
-- **Reproducibility**: runs are logged in full so they can be inspected and replayed.
+- **Reproducibility**: runs are logged in full so they can be inspected; the report is written even when a run crashes.
 
 ---
 
@@ -246,7 +285,7 @@ python -m evaluation.ablation_runner --benchmark data/benchmarks/ --runs 5
 
 ## Contributing
 
-Issues and pull requests are welcome. Please run `pytest` before submitting.
+Issues and pull requests are welcome. Please run `pytest` before submitting (the unit tests need no API key or Docker).
 
 ## License
 

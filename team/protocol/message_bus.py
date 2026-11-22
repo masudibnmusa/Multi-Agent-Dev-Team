@@ -26,11 +26,5 @@ class MessageBus:
         inbox = self._inboxes[recipient]
         return inbox.popleft() if inbox else None
 
-    def drain(self, recipient: str) -> list[Message]:
-        inbox = self._inboxes[recipient]
-        items = list(inbox)
-        inbox.clear()
-        return items
-
     def pending(self, recipient: str) -> int:
         return len(self._inboxes[recipient])

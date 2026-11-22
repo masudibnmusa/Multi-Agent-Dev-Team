@@ -1,6 +1,5 @@
 import json
 import re
-import threading
 from pathlib import Path
 from typing import Any
 
@@ -11,7 +10,6 @@ class SharedStore:
     """Blackboard: request, plan, task status, and per-task artifacts."""
 
     def __init__(self, snapshot_dir: Path | None = None) -> None:
-        self._lock = threading.RLock()
         self.request = ""
         self.plan: Plan | None = None
         self.task_status: dict[str, str] = {}
@@ -20,13 +18,11 @@ class SharedStore:
         self._snap_count = 0
 
     def set_request(self, request: str) -> None:
-        with self._lock:
-            self.request = request
+        self.request = request
 
     def set_plan(self, plan: Plan) -> None:
-        with self._lock:
-            self.plan = plan
-            self.task_status = {t.id: "pending" for t in plan.tasks}
+        self.plan = plan
+        self.task_status = {t.id: "pending" for t in plan.tasks}
 
     def get_task(self, task_id: str) -> TaskSpec:
         if self.plan is None:
@@ -37,24 +33,21 @@ class SharedStore:
         raise KeyError(f"Unknown task: {task_id}")
 
     def set_status(self, task_id: str, status: str) -> None:
-        with self._lock:
-            self.task_status[task_id] = status
+        self.task_status[task_id] = status
 
     def add_artifact(self, task_id: str, key: str, value: Any) -> None:
-        with self._lock:
-            self.artifacts.setdefault(task_id, {})[key] = value
+        self.artifacts.setdefault(task_id, {})[key] = value
 
     def to_dict(self) -> dict[str, Any]:
-        with self._lock:
-            return {
-                "request": self.request,
-                "plan": self.plan.model_dump() if self.plan else None,
-                "task_status": dict(self.task_status),
-                "artifacts": {
-                    tid: {k: (v if len(str(v)) < 5000 else str(v)[:5000] + "…") for k, v in a.items()}
-                    for tid, a in self.artifacts.items()
-                },
-            }
+        return {
+            "request": self.request,
+            "plan": self.plan.model_dump() if self.plan else None,
+            "task_status": dict(self.task_status),
+            "artifacts": {
+                tid: {k: (v if len(str(v)) < 5000 else str(v)[:5000] + "…") for k, v in a.items()}
+                for tid, a in self.artifacts.items()
+            },
+        }
 
     def snapshot(self, label: str) -> Path | None:
         if not self.snapshot_dir:

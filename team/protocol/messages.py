@@ -45,7 +45,7 @@ class Message(BaseModel):
     ) -> "Message":
         expected = PAYLOAD_MODELS[type]
         if not isinstance(payload, expected):
-            raise TypeError(f"{type.value} needs a {expected.__name__}, got {type(payload).__name__}")
+            raise TypeError(f"{type.value} needs a {expected.__name__}, got {payload.__class__.__name__}")
         return cls(
             type=type,
             sender=sender,

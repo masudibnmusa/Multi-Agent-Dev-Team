@@ -64,7 +64,7 @@ def test_dependency_order():
     assert sched.next_ready().id == "T2"
     sched.mark("T2", "done")
     assert sched.next_ready() is None
-    assert sched.all_done()
+    assert set(sched.status.values()) == {"done"}
 
 
 def test_cycle_detected():
