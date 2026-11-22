@@ -22,15 +22,19 @@ def main(argv: list[str] | None = None) -> int:
     build.add_argument("--docker", action="store_true", help="Run tests in Docker")
 
     args = parser.parse_args(argv)
+    if args.max_rounds is not None and args.max_rounds < 1:
+        parser.error("--max-rounds must be at least 1")
+    if args.budget is not None and args.budget <= 0:
+        parser.error("--budget must be greater than 0")
 
     if not os.getenv("ANTHROPIC_API_KEY"):
         print("ANTHROPIC_API_KEY is not set (put it in .env).", file=sys.stderr)
         return 2
 
     config = Config()
-    if args.max_rounds:
+    if args.max_rounds is not None:
         config.max_revision_rounds = args.max_rounds
-    if args.budget:
+    if args.budget is not None:
         config.cost_budget_usd = args.budget
     if args.no_reviewer:
         config.enable_reviewer = False
