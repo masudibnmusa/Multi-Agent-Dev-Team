@@ -231,7 +231,7 @@ python -m evaluation.ablation_runner --benchmark data/benchmarks/ --runs 5
 - **Least privilege**: only the Coder can write files; every other role is read-only.
 - **Bounded loops**: revision rounds, tasks, and spend are all capped; deadlocks escalate to arbitration, then to a human.
 - **Blind testing**: the Tester works from acceptance criteria, not the implementation.
-- **Isolation**: all generated code and tests run in a Docker sandbox.
+- **Isolation**: with `USE_DOCKER=true` (or `--docker`), generated code and tests run in a Docker sandbox with no network. The default (`false`) runs them on your machine with the API key removed from their environment, but they are not isolated: use Docker for untrusted repos.
 - **Reproducibility**: runs are logged in full so they can be inspected and replayed.
 
 ---

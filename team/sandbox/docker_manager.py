@@ -14,6 +14,18 @@ class ExecResult:
     timed_out: bool = False
 
 
+SECRET_VARS = {"ANTHROPIC_API_KEY"}
+
+
+def local_env(workspace: Path) -> dict[str, str]:
+    """Env for running model-written code on the host: no secrets, workspace on PYTHONPATH."""
+    return {
+        **{k: v for k, v in os.environ.items() if k not in SECRET_VARS},
+        "PYTHONPATH": os.pathsep.join([str(workspace), str(workspace / "src")]),
+        "PYTHONDONTWRITEBYTECODE": "1",
+    }
+
+
 class DockerManager:
     """Runs commands in an isolated container (no network), or locally when Docker is disabled."""
 
@@ -46,11 +58,7 @@ class DockerManager:
             env = None
         else:
             cmd = command
-            env = {
-                **os.environ,
-                "PYTHONPATH": os.pathsep.join([str(workspace), str(workspace / "src")]),
-                "PYTHONDONTWRITEBYTECODE": "1",
-            }
+            env = local_env(workspace)
         try:
             proc = subprocess.run(
                 cmd, cwd=workspace, env=env, capture_output=True, text=True, timeout=self.timeout
